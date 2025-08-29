@@ -1,0 +1,7 @@
+C:\KDR\SERVİSLER\kdr_projeler\OptMailWeb\obj\Release\net7.0\PubTmp\Out\OptMailWeb.exe
+C:\KDR\SERVİSLER\kdr_projeler\OptMailWeb\obj\Release\net7.0\PubTmp\Out\appsettings.Development.json
+C:\KDR\SERVİSLER\kdr_projeler\OptMailWeb\obj\Release\net7.0\PubTmp\Out\appsettings.json
+C:\KDR\SERVİSLER\kdr_projeler\OptMailWeb\obj\Release\net7.0\PubTmp\Out\OptMailWeb.dll
+C:\KDR\SERVİSLER\kdr_projeler\OptMailWeb\obj\Release\net7.0\PubTmp\Out\OptMailWeb.deps.json
+C:\KDR\SERVİSLER\kdr_projeler\OptMailWeb\obj\Release\net7.0\PubTmp\Out\OptMailWeb.runtimeconfig.json
+C:\KDR\SERVİSLER\kdr_projeler\OptMailWeb\obj\Release\net7.0\PubTmp\Out\OptMailWeb.pdb
