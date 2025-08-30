@@ -1,32 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OptMailWeb.Models;
-using System.Diagnostics;
 
 namespace OptMailWeb.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
-        {
-            _logger = logger;
-        }
-
         public IActionResult Index()
         {
-            return View();
-        }
+            // Login kontrolü
+            var kullaniciKodu = HttpContext.Session.GetString("KullaniciKodu");
+            if (string.IsNullOrEmpty(kullaniciKodu))
+            {
+                return RedirectToAction("Login", "Account");
+            }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+            ViewBag.KullaniciKodu = kullaniciKodu;
+            ViewBag.Aciklama = HttpContext.Session.GetString("Aciklama");
+            ViewBag.SifreDegisimGun = HttpContext.Session.GetInt32("SifreDegisimGun");
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View();
         }
     }
 }
