@@ -1,16 +1,318 @@
-﻿@{
-    ViewData["Title"] = "Anasayfa";
-}
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mail Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="~/js/mail.js"></script>
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-<div class="container mt-5">
-    <h2>Hoşgeldiniz, @ViewBag.Aciklama (@ViewBag.KullaniciKodu)</h2>
+        .editor-container {
+            display: flex;
+            height: 100vh;
+        }
 
-    @if (ViewBag.SifreDegisimGun != null)
-    {
-        <p>Şifre değişimine kalan gün sayısı: @ViewBag.SifreDegisimGun</p>
-    }
+        .left-panel {
+            width: 75%;
+            background: #ffffff;
+            border-right: 1px solid #dee2e6;
+            padding: 10px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+        }
 
-    <div class="mt-4">
-        <a href="@Url.Action("Logout", "Account")" class="btn btn-danger">Çıkış Yap</a>
+        .right-panel {
+            flex-grow: 1;
+            padding: 20px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            border-right: 1px solid #c1ffff;
+            background: #ffffff;
+        }
+
+        .toolbar {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+            .toolbar button, .toolbar select, .toolbar input[type=color] {
+                border: none;
+                padding: 6px 10px;
+                border-radius: 6px;
+                background: #e9ecef;
+                transition: all 0.2s ease;
+            }
+
+                .toolbar button:hover, .toolbar select:hover, .toolbar input[type=color]:hover {
+                    background: #0d6efd;
+                    color: #fff;
+                }
+
+        .editor {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            min-height: 400px;
+            padding: 15px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Sol Panel -->
+        <div class="left-panel">
+            <div class="text-start mb-4">
+                <h5 class="mb-3">Mail Konusu</h5>
+                <input type="text" class="form-control mb-3" placeholder="Mail konusunu giriniz" />
+            </div>
+
+
+            <h5 class="mb-2">Mail İçeriği</h5>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <!-- Yazı stilleri -->
+                <button onclick="execCmd('bold')"><b>B</b></button>
+                <button onclick="execCmd('italic')"><i>I</i></button>
+                <button onclick="execCmd('underline')"><u>U</u></button>
+                <button onclick="execCmd('strikeThrough')"><s>S</s></button>
+
+                <!-- Listeler -->
+                <button onclick="execCmd('insertUnorderedList')">• Liste</button>
+                <button onclick="execCmd('insertOrderedList')">1. Liste</button>
+
+                <!-- Hizalama -->
+                <button onclick="execCmd('justifyLeft')">Sol</button>
+                <button onclick="execCmd('justifyCenter')">Orta</button>
+                <button onclick="execCmd('justifyRight')">Sağ</button>
+                <button onclick="execCmd('justifyFull')">Tam</button>
+
+                <!-- Bloklar -->
+                <button onclick="execCmd('formatBlock','<blockquote>')">“ Alıntı</button>
+                <button onclick="insertCode()">&lt;/&gt; Kod</button>
+
+                <!-- Yazı boyutu -->
+                <select onchange="execCmd('fontSize', this.value)">
+                    <option value="3">Normal</option>
+                    <option value="1">Küçük</option>
+                    <option value="5">Büyük</option>
+                    <option value="7">Çok Büyük</option>
+                </select>
+
+                <!-- Renk -->
+                <input type="color" onchange="execCmd('foreColor', this.value)" title="Yazı Rengi" />
+
+                <!-- Link -->
+                <button onclick="insertLink()">🔗 Link</button>
+
+                <!-- Resim -->
+                <button onclick="document.getElementById('imageUpload').click()">🖼️ Resim</button>
+                <input type="file" id="imageUpload" accept="image/*" style="display:none" onchange="insertImage(event)" />
+
+                <!-- Tablo -->
+                <button onclick="insertTable()">📊 Tablo</button>
+            </div>
+
+            <!-- Editör -->
+            <div id="editor" class="editor" contenteditable="true"></div>
+
+            <button class="btn btn-primary mt-3 w-100" onclick="saveMail()">Kaydet</button>
+        </div>
+
+        <!-- Sağ Panel -->
+        <div class="right-panel">
+            <!-- Yeni Kullanıcı Modal -->
+            <div class="modal fade" id="mailKullaniciModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalYeniKullaniciLabel">Yeni Kullanıcı Ekle</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="formYeniKullanici">
+                                <div class="row mb-2">
+                                    <div class="col">
+                                        <label>Bölüm</label>
+                                        <select id="BolumId" class="form-select"></select>
+                                    </div>
+                                    <div class="col">
+                                        <label>Birim</label>
+                                        <select id="BirimId" class="form-select"></select>
+                                    </div>
+                                    <div class="col">
+                                        <label>Aracı Kurum</label>
+                                        <select id="AraciKurumId" class="form-select"></select>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Ad Soyad</label>
+                                    <input type="text" id="AdSoyad" class="form-control" />
+                                </div>
+                                <div class="mb-2">
+                                    <label>Telefon</label>
+                                    <input type="text" id="Telefon" class="form-control" />
+                                </div>
+                                <div class="mb-2">
+                                    <label>Mail</label>
+                                    <input type="email" id="Mail" class="form-control" />
+                                </div>
+                                <div class="mb-2">
+                                    <label>Adres</label>
+                                    <input type="text" id="Adres" class="form-control" />
+                                </div>
+                                <div class="mb-2">
+                                    <label>Notlar</label>
+                                    <textarea id="Notlar" class="form-control"></textarea>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" class="form-check-input" id="Aktif" checked>
+                                    <label class="form-check-label" for="Aktif">Aktif</label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                            <button type="button" class="btn btn-primary" id="btnKaydetKullanici">Kaydet</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @await Html.PartialAsync("RightPanel")
+        </div>
     </div>
-</div>
+
+    <script>
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+        }
+
+        function insertCode() {
+            let selection = document.getSelection().toString();
+            if (selection) {
+                document.execCommand("insertHTML", false, "<code style='background:#f1f1f1;padding:2px 4px;border-radius:4px;'>" + selection + "</code>");
+            }
+        }
+
+        function insertLink() {
+            const url = prompt("Link girin:");
+            if (url) {
+                document.execCommand("createLink", false, url);
+            }
+        }
+
+        function insertImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.execCommand("insertImage", false, e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function insertTable() {
+            const rows = prompt("Kaç satır?");
+            const cols = prompt("Kaç sütun?");
+            if (rows > 0 && cols > 0) {
+                let table = "<table border='1' style='border-collapse:collapse;width:100%;'>";
+                for (let i = 0; i < rows; i++) {
+                    table += "<tr>";
+                    for (let j = 0; j < cols; j++) {
+                        table += "<td style='padding:5px;'>Hücre</td>";
+                    }
+                    table += "</tr>";
+                }
+                table += "</table>";
+                document.execCommand("insertHTML", false, table);
+            }
+        }
+
+
+        $(document).ready(function () {
+            // Yeni Kullanıcı butonuna tıklayınca modal aç
+            $("#btnYeniKullanici").click(function () {
+                $("#modalYeniKullanici").modal("show");
+
+                // Burada opsiyonları doldurabilirsin
+                loadBolumler();
+                loadBirimler();
+                loadAraciKurumlar();
+            });
+
+            // Kaydet butonuna tıklayınca AJAX ile kaydet
+            $("#btnKaydetKullanici").click(function () {
+                const data = {
+                    BolumId: $("#BolumId").val(),
+                    BirimId: $("#BirimId").val(),
+                    AraciKurumId: $("#AraciKurumId").val(),
+                    AdSoyad: $("#AdSoyad").val(),
+                    Telefon: $("#Telefon").val(),
+                    Mail: $("#Mail").val(),
+                    Adres: $("#Adres").val(),
+                    Notlar: $("#Notlar").val(),
+                    Aktif: $("#Aktif").is(":checked")
+                };
+
+                $.ajax({
+                    url: '/MailKullanici/Kaydet',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        alert(res.message);
+                        if (res.success) {
+                            $("#modalYeniKullanici").modal("hide");
+                            // listeyi tekrar yükle
+                            loadKullaniciList();
+                        }
+                    }
+                });
+            });
+        });
+
+        function loadBolumler() {
+            $.getJSON('/Mail/GetBolumler', function (data) {
+                let bolumSelect = $("#BolumId");
+                bolumSelect.empty();
+                data.forEach(d => bolumSelect.append(`<option value="${d.Id}">${d.Ad}</option>`));
+            });
+        }
+
+        function loadAraciKurumlar() {
+            $.getJSON('/Mail/GetKurumlar', function (data) {
+                let araciKurumSelect = $("#AraciKurumId");
+                araciKurumSelect.empty();
+                data.forEach(d => araciKurumSelect.append(`<option value="${d.Id}">${d.Ad}</option>`));
+            });
+        }
+
+        function Birimler() {
+            let bolumId = $("#BolumId").val();
+            let kurumId = $("#AraciKurumId").val(); // Aracı Kurum seçimi
+            $.getJSON(`/Mail/GetBirimler?bolumId=${bolumId}&kurumId=${kurumId}`, function (data) {
+                let birimSelect = $("#BirimId");
+                birimSelect.empty();
+                data.forEach(d => birimSelect.append(`<option value="${d.Id}">${d.Ad}</option>`));
+            });
+        }
+
+        // Bölüm veya Aracı Kurum değişirse birimleri tekrar yükle
+        $("#BolumId, #AraciKurumId").change(Birimler);
+
+
+    </script>
+</body>
+</html>

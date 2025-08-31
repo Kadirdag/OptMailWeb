@@ -17,6 +17,14 @@
       "PackagePath": "staticwebassets\\images\\login-bg.jpg"
     },
     {
+      "Id": "C:\\Kadir\\projeler\\OptMailWeb\\wwwroot\\images\\opt.png",
+      "PackagePath": "staticwebassets\\images\\opt.png"
+    },
+    {
+      "Id": "C:\\Kadir\\projeler\\OptMailWeb\\wwwroot\\js\\mail.js",
+      "PackagePath": "staticwebassets\\js\\mail.js"
+    },
+    {
       "Id": "C:\\Kadir\\projeler\\OptMailWeb\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },

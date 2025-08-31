@@ -1,0 +1,111 @@
+﻿@* Views/Shared/RightPanel.cshtml *@
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<div class="col-md">
+    <div class="card shadow-sm p-3">
+        <h5 class="card-title">Alıcı Filtreleme</h5>
+
+        <div class="mb-2">
+            <label for="bolum" class="form-label">Bölüm</label>
+            <select id="bolum" class="form-select"></select>
+        </div>
+
+        <div class="mb-2">
+            <label for="kurum" class="form-label">Kurum</label>
+            <select id="kurum" class="form-select"></select>
+        </div>
+
+        <div class="mb-2">
+            <label for="birim" class="form-label">Birim</label>
+            <select id="birim" class="form-select"></select>
+        </div>
+
+        <div id="mailList"></div>
+
+        <h5>Filtrelenmiş Kullanıcılar</h5>
+        <table class="table table-bordered table-hover" id="filtered-users-table">
+            <thead>
+                <tr>
+                    <th>Seç</th>
+                    <th>Ad Soyad</th>
+                    <th>Mail</th>
+                    <th>Telefon</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Buraya JS ile filtrelenmiş kullanıcılar gelecek -->
+            </tbody>
+        </table>
+
+        <script>
+            $(document).ready(function () {
+
+                // Bölümleri çek
+                $.getJSON("/Mail/GetBolumler", function (data) {
+                    $("#bolum").append('<option value="">Seçiniz</option>');
+                    $.each(data, function (i, item) {
+                        $("#bolum").append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                });
+
+                // Kurumları çek
+                $.getJSON("/Mail/GetAraciKurumlar", function (data) {
+                    $("#kurum").append('<option value="">Seçiniz</option>');
+                    $.each(data, function (i, item) {
+                        $("#kurum").append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                });
+
+                // Bölüm veya Kurum değişince birimleri çek
+                $("#bolum, #kurum").change(function () {
+                    const bolumId = $("#bolum").val() || 0;
+                    const kurumId = $("#kurum").val() || 0;
+                    $("#birim").empty();
+                    $.getJSON("/Mail/GetBirimler?bolumId=" + bolumId + "&kurumId=" + kurumId, function (data) {
+                        $("#birim").append('<option value="">Seçiniz</option>');
+                        $.each(data, function (i, item) {
+                            $("#birim").append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+                    });
+                });
+
+                // Birim değişince mailleri çek (örnek)
+                $("#birim").change(function () {
+                    const birimId = $(this).val();
+                    // Burada Ajax ile mail listesi çekilip #mailList içine eklenecek
+                    $("#mailList").html(""); // Örnek olarak boş yapıyoruz
+                });
+
+            });
+
+            function loadFilteredUsers() {
+                const bolumId = document.getElementById("bolum-select").value;
+                const kurumId = document.getElementById("kurum-select").value;
+                const araciKurumId = document.getElementById("birim-select").value;
+
+                fetch(`/Mail/GetFilteredUsers?bolumId=${bolumId}&kurumId=${kurumId}&araciKurumId=${araciKurumId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const tbody = document.querySelector("#filtered-users-table tbody");
+                        tbody.innerHTML = "";
+                        data.forEach(user => {
+                            tbody.innerHTML += `
+                                <tr>
+                                    <td><input type="checkbox" class="user-checkbox" data-mail="${user.Mail}"></td>
+                                    <td>${user.AdSoyad}</td>
+                                    <td>${user.Mail}</td>
+                                    <td>${user.Telefon}</td>
+                                </tr>
+                            `;
+                        });
+                    });
+            }
+
+            // Filtre değiştiğinde tabloyu güncelle
+            document.getElementById("bolum-select").addEventListener("change", loadFilteredUsers);
+            document.getElementById("kurum-select").addEventListener("change", loadFilteredUsers);
+            document.getElementById("birim-select").addEventListener("change", loadFilteredUsers);
+
+            // Sayfa yüklendiğinde tabloyu getir
+            document.addEventListener("DOMContentLoaded", loadFilteredUsers);
+
+        </script>

@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "Ul5b/+8kpcjfZzLrgpRKPKwBBFcvKG/dpA+x0FPMLY8=",
+  "Hash": "/Ip2rsVm9NMO4K6UgPizHpZJ9G3s/xZrvb1dgMwRakM=",
   "Source": "OptMailWeb",
   "BasePath": "_content/OptMailWeb",
   "Mode": "Default",
@@ -100,6 +100,40 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\images\\login-bg.jpg"
+    },
+    {
+      "Identity": "C:\\Kadir\\projeler\\OptMailWeb\\wwwroot\\images\\opt.png",
+      "SourceId": "OptMailWeb",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Kadir\\projeler\\OptMailWeb\\wwwroot\\",
+      "BasePath": "_content/OptMailWeb",
+      "RelativePath": "images/opt.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\images\\opt.png"
+    },
+    {
+      "Identity": "C:\\Kadir\\projeler\\OptMailWeb\\wwwroot\\js\\mail.js",
+      "SourceId": "OptMailWeb",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Kadir\\projeler\\OptMailWeb\\wwwroot\\",
+      "BasePath": "_content/OptMailWeb",
+      "RelativePath": "js/mail.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\mail.js"
     },
     {
       "Identity": "C:\\Kadir\\projeler\\OptMailWeb\\wwwroot\\js\\site.js",
