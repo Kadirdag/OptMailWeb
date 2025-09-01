@@ -1,6 +1,48 @@
 ﻿@* Views/Shared/RightPanel.cshtml *@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<style>
+    /* Custom checkbox */
+    .customcheckbox {
+        position: relative;
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        margin-right: 6px;
+    }
 
+        .customcheckbox input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .customcheckbox .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 24px;
+            width: 24px;
+            background-color: #007bff;
+            border-radius: 4px;
+        }
+
+        .customcheckbox input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .customcheckbox .checkmark:after {
+            content: "";
+            position: absolute;
+            left: 8px;
+            top: 4px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+            display: none;
+        }
+</style>
 <div class="col-md">
     <div class="card shadow-sm p-3">
         <h5 class="card-title">Alıcı Filtreleme</h5>
@@ -20,137 +62,238 @@
             <select id="birim" class="form-select"></select>
         </div>
 
-        <div id="mailList"></div>
 
-        <h5>Filtrelenmiş Kullanıcılar</h5>
-        <table class="table table-bordered table-hover" id="filtered-users-table">
-            <thead>
-                <tr>
-                    <th>Seç</th>
-                    <th>Ad Soyad</th>
-                    <th>Mail</th>
-                    <th>Telefon</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Buraya JS ile filtrelenmiş kullanıcılar gelecek -->
-            </tbody>
-        </table>
-        <div class="d-flex justify-content-end mt-2">
-            <button id="btnSave" class="btn btn-success" style="width: 150px;">
+
+
+
+        <div class="card p-3">
+            <h5 class="card-title mb-3">Filtrelenmiş Kullanıcılar</h5>
+
+            <!-- Tümünü Seç ve Arama Kutusu -->
+            <div class="d-flex mb-2 align-items-center gap-2">
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label class="customcheckbox">
+                        <input type="checkbox" id="selectAllUsers">
+                        <span class="checkmark"></span>
+                    </label>
+                    <span style="font-size:0.9rem;">Tümünü Seç</span>
+                </div>
+                <input type="text" id="searchMail" class="form-control" placeholder="Mail ile ara..." style="flex:1;">
+            </div>
+
+            <!-- Scrollable Table -->
+            <div style="max-height:300px; overflow-y:auto;">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th></th>
+                            <th>Ad Soyad</th>
+                            <th>Mail</th>
+                            <th>Telefon</th>
+                        </tr>
+                    </thead>
+                    <tbody id="filteredUsersBody">
+                        <!-- JS ile doldurulacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <div class="d-flex mt-2">
+            <button id="btnSave" class="btn btn-success flex-grow-1">
                 Kaydet
             </button>
         </div>
-        <script>
-            $(document).ready(function () {
+    </div>
+</div>
 
-                // Bölümleri çek
-                $.getJSON("/Mail/GetBolumler", function (data) {
-                    $("#bolum").append('<option value="">Seçiniz</option>');
-                    $.each(data, function (i, item) {
-                        $("#bolum").append('<option value="' + item.id + '">' + item.name + '</option>');
-                    });
-                });
+<script>
+    $(document).ready(function () {
 
-                // Kurumları çek
-                $.getJSON("/Mail/GetAraciKurumlar", function (data) {
-                    $("#kurum").append('<option value="">Seçiniz</option>');
-                    $.each(data, function (i, item) {
-                        $("#kurum").append('<option value="' + item.id + '">' + item.name + '</option>');
-                    });
-                });
-
-                // Bölüm veya Kurum değişince birimleri çek
-                $("#bolum, #kurum").change(function () {
-                    const bolumId = $("#bolum").val() || 0;
-                    const kurumId = $("#kurum").val() || 0;
-                    $("#birim").empty();
-                    $.getJSON("/Mail/GetBirimler?bolumId=" + bolumId + "&kurumId=" + kurumId, function (data) {
-                        $("#birim").append('<option value="">Seçiniz</option>');
-                        $.each(data, function (i, item) {
-                            $("#birim").append('<option value="' + item.id + '">' + item.name + '</option>');
-                        });
-                    });
-                });
-
-                // Birim değişince mailleri çek (örnek)
-                $("#birim").change(function () {
-                    const birimId = $(this).val();
-                    // Burada Ajax ile mail listesi çekilip #mailList içine eklenecek
-                    $("#mailList").html(""); // Örnek olarak boş yapıyoruz
-                });
-
+        // Bölümleri çek
+        $.getJSON("/Mail/GetBolumler", function (data) {
+            $("#bolum").append('<option value="">Seçiniz</option>');
+            $.each(data, function (i, item) {
+                $("#bolum").append('<option value="' + item.id + '">' + item.name + '</option>');
             });
+        });
 
-            function loadFilteredUsers() {
-                const bolumId = document.getElementById("bolum").value;
-                const kurumId = document.getElementById("kurum").value;
-                const araciKurumId = document.getElementById("birim").value;
-
-                fetch(`/Mail/GetFilteredUsers?bolumId=${bolumId}&kurumId=${kurumId}&araciKurumId=${araciKurumId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const tbody = document.querySelector("#filtered-users-table tbody");
-                        tbody.innerHTML = "";
-                        data.forEach(user => {
-                            tbody.innerHTML += `
-                    <tr>
-                        <td><input type="checkbox" class="user-checkbox" data-mail="${user.mail}"></td>
-                        <td>${user.adSoyad}</td>
-                        <td>${user.mail}</td>
-                        <td>${user.telefon}</td>
-                    </tr>
-                `;
-                        });
-                    });
-            }
-
-            // Filtre değiştiğinde tabloyu güncelle
-            document.getElementById("bolum").addEventListener("change", loadFilteredUsers);
-            document.getElementById("kurum").addEventListener("change", loadFilteredUsers);
-            document.getElementById("birim").addEventListener("change", loadFilteredUsers);
-
-            // Sayfa yüklendiğinde tabloyu getir
-            document.addEventListener("DOMContentLoaded", loadFilteredUsers);
-
-
-            function saveSelectedUsers() {
-                const selectedUsers = [];
-
-                document.querySelectorAll(".user-checkbox:checked").forEach(cb => {
-                    selectedUsers.push({
-                        adSoyad: cb.dataset.adsoyad,
-                        mail: cb.dataset.mail,
-                        telefon: cb.dataset.telefon
-                    });
-                });
-
-                if (selectedUsers.length === 0) {
-                    alert("Lütfen en az bir kullanıcı seçiniz!");
-                    return;
-                }
-
-
-                fetch("/Mail/SaveSelectedUsers", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(selectedUsers)
-                })
-                    .then(res => res.json())
-                    .then(res => alert("Seçilen kullanıcılar kaydedildi."))
-                    .catch(err => {
-                        console.error(err);
-                        alert("Kaydetme sırasında hata oluştu!");
-                    });
-            }
-
-            document.addEventListener("DOMContentLoaded", function () {
-                const btn = document.getElementById("btnSave");
-                if (btn) {
-                    btn.addEventListener("click", saveSelectedUsers);
-                }
+        // Kurumları çek
+        $.getJSON("/Mail/GetAraciKurumlar", function (data) {
+            $("#kurum").append('<option value="">Seçiniz</option>');
+            $.each(data, function (i, item) {
+                $("#kurum").append('<option value="' + item.id + '">' + item.name + '</option>');
             });
+        });
+
+        // Bölüm veya Kurum değişince birimleri çek
+        $("#bolum, #kurum").change(function () {
+            const bolumId = $("#bolum").val() || 0;
+            const kurumId = $("#kurum").val() || 0;
+            $("#birim").empty();
+            $.getJSON("/Mail/GetBirimler?bolumId=" + bolumId + "&kurumId=" + kurumId, function (data) {
+                $("#birim").append('<option value="">Seçiniz</option>');
+                $.each(data, function (i, item) {
+                    $("#birim").append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+            });
+        });
+
+    });
+
+    // Filtrelenmiş kullanıcıları getir
+    function loadFilteredUsers() {
+        const bolumId = $("#bolum").val() || 0;
+        const kurumId = $("#kurum").val() || 0;
+        const araciKurumId = $("#birim").val() || 0;
+
+        // Filtre seçilmemişse 0 yerine null gönderebiliriz
+        $.getJSON(`/Mail/GetFilteredUsers?bolumId=${bolumId || ''}&kurumId=${kurumId || ''}&araciKurumId=${araciKurumId || ''}`, function (data) {
+            const tbody = $("#filteredUsersBody");
+            tbody.empty();
+            data.forEach(user => {
+                tbody.append(`
+                        <tr>
+                            <td>
+                                <label class="customcheckbox">
+                                    <input type="checkbox" class="user-checkbox" data-mail="${user.mail}">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td>${user.adSoyad}</td>
+                            <td>${user.mail}</td>
+                            <td>${user.telefon}</td>
+                        </tr>
+                    `);
+            });
+        });
+    }
 
 
-        </script>
-        
+    // Filtre değişince tabloyu güncelle
+    document.getElementById("bolum").addEventListener("change", loadFilteredUsers);
+    document.getElementById("kurum").addEventListener("change", loadFilteredUsers);
+    document.getElementById("birim").addEventListener("change", loadFilteredUsers);
+
+    // Sayfa yüklendiğinde tabloyu getir
+    document.addEventListener("DOMContentLoaded", loadFilteredUsers);
+
+    // Seçilen kullanıcıların maillerini gönder
+    function sendSelectedUsersMail() {
+        const selectedMails = [];
+
+        document.querySelectorAll(".user-checkbox:checked").forEach(cb => {
+            if (cb.dataset.mail) selectedMails.push(cb.dataset.mail);
+        });
+
+        if (selectedMails.length === 0) {
+            alert("Lütfen en az bir kullanıcı seçiniz!");
+            return;
+        }
+
+        fetch("/Mail/SendSelectedUsersMail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(selectedMails)
+        })
+            .then(res => res.json())
+            .then(res => alert(res.message))
+            .catch(err => {
+                console.error(err);
+                alert("Mail gönderme sırasında hata oluştu!");
+            });
+    }
+
+    // Kaydet butonuna event bağlama
+    document.addEventListener("DOMContentLoaded", function () {
+        const btn = document.getElementById("btnSave");
+        if (btn) {
+            btn.addEventListener("click", sendSelectedUsersMail);
+        }
+    });
+
+
+
+
+    function sendSelectedUsersMail() {
+        const selectedEmails = Array.from(document.querySelectorAll(".user-checkbox:checked"))
+            .map(cb => cb.dataset.mail)
+            .filter(mail => mail);
+
+        if (selectedEmails.length === 0) {
+            alert("Lütfen en az bir kullanıcı seçiniz!");
+            return;
+        }
+
+        // index.cshtml’den mail başlığı ve içeriğini al
+        const mailData = window.parent.getMailData();
+
+        if (!mailData.subject || !mailData.body) {
+            alert("Mail başlığı veya içeriği boş olamaz!");
+            return;
+        }
+
+        const payload = {
+            Subject: mailData.subject,
+            Body: mailData.body,
+            To: selectedEmails
+        };
+
+        fetch("/Mail/SendMail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    alert("Mail başarıyla gönderildi!");
+                } else {
+                    alert("Mail gönderiminde hata: " + res.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Mail gönderiminde hata oluştu!");
+            });
+    }
+
+    // Kaydet butonuna bağla
+    document.addEventListener("DOMContentLoaded", function () {
+        const btn = document.getElementById("btnSave");
+        if (btn) btn.addEventListener("click", sendSelectedUsersMail);
+    });
+
+
+
+    $("#selectAllUsers").on("change", function () {
+        const checked = $(this).is(":checked");
+        $(".user-checkbox").prop("checked", checked);
+    });
+
+    // Mail ile arama
+    $("#searchMail").on("keyup", function () {
+        const search = $(this).val().toLowerCase();
+        $("#filteredUsersBody tr").filter(function () {
+            $(this).toggle($(this).find("td:eq(2)").text().toLowerCase().includes(search));
+        });
+    });
+
+    // Filtre değiştiğinde tabloyu güncelle
+    $("#bolum, #kurum, #birim").on("change", loadFilteredUsers);
+
+    $(document).ready(loadFilteredUsers); // Sayfa yüklendiğinde tüm liste
+
+</script>

@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\KDR\\SERVİSLER\\kdr_projeler\\OptMailWeb\\OptMailWeb\\OptMailWeb.csproj": {}
+    "C:\\Kadir\\projeler\\OptMailWeb\\OptMailWeb.csproj": {}
   },
   "projects": {
-    "C:\\KDR\\SERVİSLER\\kdr_projeler\\OptMailWeb\\OptMailWeb\\OptMailWeb.csproj": {
+    "C:\\Kadir\\projeler\\OptMailWeb\\OptMailWeb.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\KDR\\SERVİSLER\\kdr_projeler\\OptMailWeb\\OptMailWeb\\OptMailWeb.csproj",
+        "projectUniqueName": "C:\\Kadir\\projeler\\OptMailWeb\\OptMailWeb.csproj",
         "projectName": "OptMailWeb",
-        "projectPath": "C:\\KDR\\SERVİSLER\\kdr_projeler\\OptMailWeb\\OptMailWeb\\OptMailWeb.csproj",
-        "packagesPath": "C:\\Users\\Kadir Dağ\\.nuget\\packages\\",
-        "outputPath": "C:\\KDR\\SERVİSLER\\kdr_projeler\\OptMailWeb\\OptMailWeb\\obj\\",
+        "projectPath": "C:\\Kadir\\projeler\\OptMailWeb\\OptMailWeb.csproj",
+        "packagesPath": "C:\\Users\\kadir\\.nuget\\packages\\",
+        "outputPath": "C:\\Kadir\\projeler\\OptMailWeb\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Kadir Dağ\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\kadir\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -76,7 +76,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.201\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
         }
       }
     }

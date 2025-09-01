@@ -33,33 +33,25 @@ namespace OptMailWeb.Controllers
 
 
 
-        [HttpPost("Mail/SendSelectedUsersMail")]
-        public IActionResult SendSelectedUsersMail([FromBody] List<MailKullanici> users)
+        [HttpPost("SendSelectedUsersMail")]
+        public IActionResult SendSelectedUsersMail([FromBody] List<string> mails)
         {
             try
             {
-                var emailList = users.Select(u => u.Mail).Where(m => !string.IsNullOrEmpty(m)).ToList();
+                var emailList = mails.Where(m => !string.IsNullOrEmpty(m)).ToList();
                 if (emailList.Count == 0)
                     return Json(new { success = false, message = "Seçilen kullanıcıların mail adresi bulunamadı!" });
 
-                // SMTP ayarlarını appsettings.json'dan oku
                 var smtpSection = _config.GetSection("SmtpSettings");
-                string host = smtpSection["Host"];
-                int port = int.Parse(smtpSection["Port"]);
-                string username = smtpSection["Username"];
-                string password = smtpSection["Password"];
-                string from = smtpSection["From"];
-
-                using var smtp = new SmtpClient(host)
+                using var smtp = new SmtpClient(smtpSection["Host"], int.Parse(smtpSection["Port"]))
                 {
-                    Port = port,
-                    Credentials = new NetworkCredential(username, password),
-                    EnableSsl = true
+                    Credentials = new NetworkCredential(smtpSection["Username"], smtpSection["Password"]),
+                    EnableSsl = bool.Parse(smtpSection["EnableSsl"])
                 };
 
                 var mail = new MailMessage
                 {
-                    From = new MailAddress(from, "Optimus Bilgilendirme"),
+                    From = new MailAddress(smtpSection["From"], "Optimus Bilgilendirme"),
                     Subject = "Bilgilendirme",
                     Body = "Merhaba, seçilen kullanıcılara gönderilen test mailidir.",
                     IsBodyHtml = true
@@ -71,7 +63,6 @@ namespace OptMailWeb.Controllers
                 }
 
                 smtp.Send(mail);
-
                 return Json(new { success = true, message = $"{emailList.Count} kişiye mail gönderildi!" });
             }
             catch (Exception ex)
@@ -93,7 +84,7 @@ namespace OptMailWeb.Controllers
 
 
 
-    [HttpPost("SaveSelectedUsers")]
+        [HttpPost("SaveSelectedUsers")]
         public IActionResult SaveSelectedUsers([FromBody] List<MailKullanici> users)
         {
             try
@@ -215,13 +206,18 @@ namespace OptMailWeb.Controllers
 
 
         [HttpGet("GetFilteredUsers")]
-        public IActionResult GetFilteredUsers(int bolumId, int kurumId, int araciKurumId)
+        public IActionResult GetFilteredUsers(int? bolumId, int? kurumId, int? araciKurumId)
         {
             using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            using var cmd = new SqlCommand("SELECT SYS_NO, AdSoyad, Mail, Telefon, Adres, Notlar, Aktif FROM Mail_Kullanici WHERE BolumId=@BolumId AND KurumId=@KurumId AND AraciKurumId=@AraciKurumId", conn);
-            cmd.Parameters.AddWithValue("@BolumId", bolumId);
-            cmd.Parameters.AddWithValue("@KurumId", kurumId);
-            cmd.Parameters.AddWithValue("@AraciKurumId", araciKurumId);
+            using var cmd = new SqlCommand("SELECT SYS_NO, AdSoyad, Mail, Telefon, Adres, Notlar, Aktif FROM Mail_Kullanici WHERE Aktif = 1", conn);
+
+            if (bolumId.HasValue) cmd.CommandText += " AND BolumId=@BolumId";
+            if (kurumId.HasValue) cmd.CommandText += " AND KurumId=@KurumId";
+            if (araciKurumId.HasValue) cmd.CommandText += " AND AraciKurumId=@AraciKurumId";
+
+            if (bolumId.HasValue) cmd.Parameters.AddWithValue("@BolumId", bolumId.Value);
+            if (kurumId.HasValue) cmd.Parameters.AddWithValue("@KurumId", kurumId.Value);
+            if (araciKurumId.HasValue) cmd.Parameters.AddWithValue("@AraciKurumId", araciKurumId.Value);
 
             conn.Open();
             var reader = cmd.ExecuteReader();
@@ -231,16 +227,14 @@ namespace OptMailWeb.Controllers
                 list.Add(new
                 {
                     SYS_NO = reader["SYS_NO"],
-                    AdSoyad = reader["AdSoyad"].ToString(),
-                    Mail = reader["Mail"].ToString(),
-                    Telefon = reader["Telefon"].ToString(),
-                    Adres = reader["Adres"].ToString(),
-                    Notlar = reader["Notlar"].ToString(),
-                    Aktif = (bool)reader["Aktif"]
+                    adSoyad = reader["AdSoyad"].ToString(),
+                    mail = reader["Mail"].ToString(),
+                    telefon = reader["Telefon"].ToString()
                 });
             }
             return Json(list);
         }
+
 
 
 
@@ -327,7 +321,7 @@ namespace OptMailWeb.Controllers
 
                 foreach (var to in request.To)
                 {
-                    mail.To.Add(to);
+                    mail.Bcc.Add(to);
                 }
 
                 client.Send(mail);
