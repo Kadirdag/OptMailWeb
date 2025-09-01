@@ -32,6 +32,112 @@ namespace OptMailWeb.Controllers
 
 
 
+
+        [HttpPost("Mail/SendSelectedUsersMail")]
+        public IActionResult SendSelectedUsersMail([FromBody] List<MailKullanici> users)
+        {
+            try
+            {
+                var emailList = users.Select(u => u.Mail).Where(m => !string.IsNullOrEmpty(m)).ToList();
+                if (emailList.Count == 0)
+                    return Json(new { success = false, message = "Seçilen kullanıcıların mail adresi bulunamadı!" });
+
+                // SMTP ayarlarını appsettings.json'dan oku
+                var smtpSection = _config.GetSection("SmtpSettings");
+                string host = smtpSection["Host"];
+                int port = int.Parse(smtpSection["Port"]);
+                string username = smtpSection["Username"];
+                string password = smtpSection["Password"];
+                string from = smtpSection["From"];
+
+                using var smtp = new SmtpClient(host)
+                {
+                    Port = port,
+                    Credentials = new NetworkCredential(username, password),
+                    EnableSsl = true
+                };
+
+                var mail = new MailMessage
+                {
+                    From = new MailAddress(from, "Optimus Bilgilendirme"),
+                    Subject = "Bilgilendirme",
+                    Body = "Merhaba, seçilen kullanıcılara gönderilen test mailidir.",
+                    IsBodyHtml = true
+                };
+
+                foreach (var adres in emailList)
+                {
+                    mail.To.Add(adres);
+                }
+
+                smtp.Send(mail);
+
+                return Json(new { success = true, message = $"{emailList.Count} kişiye mail gönderildi!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Mail gönderilemedi: " + ex.Message });
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    [HttpPost("SaveSelectedUsers")]
+        public IActionResult SaveSelectedUsers([FromBody] List<MailKullanici> users)
+        {
+            try
+            {
+                using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+                con.Open();
+
+                foreach (var model in users)
+                {
+                    using var cmd = new SqlCommand(@"INSERT INTO Mail_Kullanici
+                (BolumId, KurumId, AraciKurumId, AdSoyad, Telefon, Mail, Adres, Notlar, Aktif)
+                VALUES (@BolumId, @KurumId, @AraciKurumId, @AdSoyad, @Telefon, @Mail, @Adres, @Notlar, @Aktif)", con);
+
+                    cmd.Parameters.AddWithValue("@BolumId", model.BolumId);
+                    cmd.Parameters.AddWithValue("@KurumId", model.KurumId);
+                    cmd.Parameters.AddWithValue("@AraciKurumId", model.AraciKurumId);
+                    cmd.Parameters.AddWithValue("@AdSoyad", model.AdSoyad);
+                    cmd.Parameters.AddWithValue("@Telefon", model.Telefon ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Mail", model.Mail);
+                    cmd.Parameters.AddWithValue("@Adres", model.Adres ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Notlar", model.Notlar ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Aktif", model.Aktif);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                return Json(new { success = true, message = $"{users.Count} kullanıcı kaydedildi!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
         [HttpPost("Kaydet")]
         public IActionResult Kaydet([FromBody] MailKullanici model)
         {

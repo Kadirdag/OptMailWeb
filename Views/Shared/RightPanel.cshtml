@@ -1,5 +1,6 @@
 ﻿@* Views/Shared/RightPanel.cshtml *@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 <div class="col-md">
     <div class="card shadow-sm p-3">
         <h5 class="card-title">Alıcı Filtreleme</h5>
@@ -35,7 +36,11 @@
                 <!-- Buraya JS ile filtrelenmiş kullanıcılar gelecek -->
             </tbody>
         </table>
-
+        <div class="d-flex justify-content-end mt-2">
+            <button id="btnSave" class="btn btn-success" style="width: 150px;">
+                Kaydet
+            </button>
+        </div>
         <script>
             $(document).ready(function () {
 
@@ -78,9 +83,9 @@
             });
 
             function loadFilteredUsers() {
-                const bolumId = document.getElementById("bolum-select").value;
-                const kurumId = document.getElementById("kurum-select").value;
-                const araciKurumId = document.getElementById("birim-select").value;
+                const bolumId = document.getElementById("bolum").value;
+                const kurumId = document.getElementById("kurum").value;
+                const araciKurumId = document.getElementById("birim").value;
 
                 fetch(`/Mail/GetFilteredUsers?bolumId=${bolumId}&kurumId=${kurumId}&araciKurumId=${araciKurumId}`)
                     .then(res => res.json())
@@ -89,23 +94,63 @@
                         tbody.innerHTML = "";
                         data.forEach(user => {
                             tbody.innerHTML += `
-                                <tr>
-                                    <td><input type="checkbox" class="user-checkbox" data-mail="${user.Mail}"></td>
-                                    <td>${user.AdSoyad}</td>
-                                    <td>${user.Mail}</td>
-                                    <td>${user.Telefon}</td>
-                                </tr>
-                            `;
+                    <tr>
+                        <td><input type="checkbox" class="user-checkbox" data-mail="${user.mail}"></td>
+                        <td>${user.adSoyad}</td>
+                        <td>${user.mail}</td>
+                        <td>${user.telefon}</td>
+                    </tr>
+                `;
                         });
                     });
             }
 
             // Filtre değiştiğinde tabloyu güncelle
-            document.getElementById("bolum-select").addEventListener("change", loadFilteredUsers);
-            document.getElementById("kurum-select").addEventListener("change", loadFilteredUsers);
-            document.getElementById("birim-select").addEventListener("change", loadFilteredUsers);
+            document.getElementById("bolum").addEventListener("change", loadFilteredUsers);
+            document.getElementById("kurum").addEventListener("change", loadFilteredUsers);
+            document.getElementById("birim").addEventListener("change", loadFilteredUsers);
 
             // Sayfa yüklendiğinde tabloyu getir
             document.addEventListener("DOMContentLoaded", loadFilteredUsers);
 
+
+            function saveSelectedUsers() {
+                const selectedUsers = [];
+
+                document.querySelectorAll(".user-checkbox:checked").forEach(cb => {
+                    selectedUsers.push({
+                        adSoyad: cb.dataset.adsoyad,
+                        mail: cb.dataset.mail,
+                        telefon: cb.dataset.telefon
+                    });
+                });
+
+                if (selectedUsers.length === 0) {
+                    alert("Lütfen en az bir kullanıcı seçiniz!");
+                    return;
+                }
+
+
+                fetch("/Mail/SaveSelectedUsers", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(selectedUsers)
+                })
+                    .then(res => res.json())
+                    .then(res => alert("Seçilen kullanıcılar kaydedildi."))
+                    .catch(err => {
+                        console.error(err);
+                        alert("Kaydetme sırasında hata oluştu!");
+                    });
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                const btn = document.getElementById("btnSave");
+                if (btn) {
+                    btn.addEventListener("click", saveSelectedUsers);
+                }
+            });
+
+
         </script>
+        
