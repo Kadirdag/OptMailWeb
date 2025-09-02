@@ -241,16 +241,16 @@
 
 
         $(document).ready(function () {
+
             // Modal açılınca comboları doldur
             $("#btnYeniKullanici").click(function () {
                 $("#mailKullaniciModal").modal("show");
+
+                // Comboları doldur
                 loadBolumler();
                 loadAraciKurumlar();
-                loadBirimler(); // boş olarak "Seçiniz" gösterir
+                loadBirimler(); // tüm birimleri getir, boş "Seçiniz" opsiyonu göster
             });
-
-            // Bölüm veya Aracı Kurum değişirse birimleri tekrar yükle
-            $("#BolumId, #AraciKurumId").change(loadBirimler);
 
             // Kaydet butonu AJAX
             $("#btnKaydetKullanici").click(function () {
@@ -266,8 +266,9 @@
                     Aktif: $("#Aktif").is(":checked")
                 };
 
+                // Tam yol kullanıyoruz: Controller = MailKullanici, Action = Kaydet
                 $.ajax({
-                    url: '/MailKullanici/Kaydet',
+                    url: '/Mail/Kaydet',  // MailController kullanıldığı için /Mail/Kaydet
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(data),
@@ -275,12 +276,19 @@
                         alert(res.message);
                         if (res.success) {
                             $("#mailKullaniciModal").modal("hide");
+                            location.reload();
                             loadKullaniciList();
+                            
                         }
                     }
                 });
+
             });
+
+
+
         });
+
 
         function loadBolumler() {
             return $.getJSON('/Mail/GetBolumler')

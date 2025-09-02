@@ -121,14 +121,6 @@ namespace OptMailWeb.Controllers
 
 
 
-
-
-
-
-
-
-
-
         [HttpPost("Kaydet")]
         public IActionResult Kaydet([FromBody] MailKullanici model)
         {
@@ -136,8 +128,8 @@ namespace OptMailWeb.Controllers
             {
                 using var con = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
                 using var cmd = new SqlCommand(@"INSERT INTO Mail_Kullanici
-                    (BolumId, KurumId, AraciKurumId, AdSoyad, Telefon, Mail, Adres, Notlar, Aktif)
-                    VALUES (@BolumId, @KurumId, @AraciKurumId, @AdSoyad, @Telefon, @Mail, @Adres, @Notlar, @Aktif)", con);
+            (BolumId, KurumId, AraciKurumId, AdSoyad, Telefon, Mail, Adres, Notlar, Aktif)
+            VALUES (@BolumId, @KurumId, @AraciKurumId, @AdSoyad, @Telefon, @Mail, @Adres, @Notlar, @Aktif)", con);
 
                 cmd.Parameters.AddWithValue("@BolumId", model.BolumId);
                 cmd.Parameters.AddWithValue("@KurumId", model.KurumId);
@@ -159,7 +151,6 @@ namespace OptMailWeb.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
 
 
 
