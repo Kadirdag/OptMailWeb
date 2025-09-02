@@ -147,12 +147,12 @@
                                         <select id="BolumId" class="form-select"></select>
                                     </div>
                                     <div class="col">
-                                        <label>Birim</label>
-                                        <select id="BirimId" class="form-select"></select>
-                                    </div>
-                                    <div class="col">
                                         <label>Aracı Kurum</label>
                                         <select id="AraciKurumId" class="form-select"></select>
+                                    </div>
+                                    <div class="col">
+                                        <label>Birim</label>
+                                        <select id="KurumId" class="form-select"></select>
                                     </div>
                                 </div>
                                 <div class="mb-2">
@@ -256,7 +256,7 @@
             $("#btnKaydetKullanici").click(function () {
                 const data = {
                     BolumId: $("#BolumId").val(),
-                    BirimId: $("#BirimId").val(),
+                    KurumId: $("#KurumId").val(),   
                     AraciKurumId: $("#AraciKurumId").val(),
                     AdSoyad: $("#AdSoyad").val(),
                     Telefon: $("#Telefon").val(),
@@ -323,19 +323,27 @@
                 });
         }
 
-        // Birim (Bölüm + Aracı Kurum seçimine bağlı)
         function loadBirimler() {
-            return $.getJSON('/Mail/GetBirimler')
+            return $.getJSON('/Mail/GetBirimler', {
+                bolumId: 0,
+                araciKurumId: 0
+            })
                 .done(function (data) {
-                    const $sel = $("#BirimId");
+                    const $sel = $("#KurumId"); // Select ID doğru olmalı
                     $sel.empty().append('<option value="">Seçiniz</option>');
                     data.forEach(item => {
-                        const id = item.Id ?? item.id;
-                        const name = item.Name ?? item.name ?? item.Ad;
-                        $sel.append(`<option value="${id}">${name}</option>`);
+                        $sel.append(`<option value="${item.Id}">${item.Name}</option>`); // Name kullan
                     });
                 });
         }
+
+
+
+
+
+
+
+
 
         // Modal açılınca doldur + change event'leri
         $(document).ready(function () {

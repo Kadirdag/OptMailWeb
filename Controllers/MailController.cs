@@ -264,14 +264,13 @@ namespace OptMailWeb.Controllers
         }
 
         [HttpGet("GetBirimler")]
-        public IActionResult GetBirimler(int bolumId, int kurumId)
+        public IActionResult GetBirimler(int araciKurumId)
         {
             var list = new List<dynamic>();
             using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             using var cmd = new SqlCommand("SP_GET_BIRIMLER", conn);
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@BOLUM_ID", bolumId);
-            cmd.Parameters.AddWithValue("@KURUM_ID", kurumId);
+            cmd.Parameters.AddWithValue("@ARACI_KURUM_ID", araciKurumId);
             conn.Open();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
@@ -280,6 +279,7 @@ namespace OptMailWeb.Controllers
             }
             return Json(list);
         }
+
 
 
         private static string[] Scopes = { GmailService.Scope.GmailSend };
