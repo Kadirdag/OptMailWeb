@@ -228,53 +228,68 @@ namespace OptMailWeb.Controllers
 
 
 
-
-
-
         [HttpGet("GetBolumler")]
         public IActionResult GetBolumler()
         {
-            var list = new List<dynamic>();
             using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            using var cmd = new SqlCommand("SP_GET_BOLUMLER", conn);
-            cmd.CommandType = CommandType.StoredProcedure;
+            using var cmd = new SqlCommand("SELECT BolumId AS Id, Ad FROM Bolum", conn);
             conn.Open();
             using var reader = cmd.ExecuteReader();
+            var list = new List<dynamic>();
             while (reader.Read())
             {
-                list.Add(new { Id = reader["ID"], Name = reader["Ad"] });
+                list.Add(new { Id = reader.GetInt32(0), Name = reader.GetString(1) });
             }
             return Json(list);
         }
 
+        // Aracı Kurumları getir
         [HttpGet("GetAraciKurumlar")]
-        public IActionResult GetAraciKurumlar()
+        public IActionResult GetAraciKurumlar(int bolumId = 0)
         {
-            var list = new List<dynamic>();
             using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            using var cmd = new SqlCommand("SP_GET_ARACI_KURUMLAR", conn);
-            cmd.CommandType = CommandType.StoredProcedure;
+            using var cmd = new SqlCommand("SELECT AraciKurumId AS Id, Ad FROM AraciKurum WHERE BolumId = @BolumId OR @BolumId = 0", conn);
+            cmd.Parameters.AddWithValue("@BolumId", bolumId);
             conn.Open();
             using var reader = cmd.ExecuteReader();
+            var list = new List<dynamic>();
             while (reader.Read())
             {
-                list.Add(new { Id = reader["KURUM_ID"], Name = reader["KURUM_ADI"] });
+                list.Add(new { Id = reader.GetInt32(0), Name = reader.GetString(1) });
             }
             return Json(list);
         }
 
         [HttpGet("GetBirimler")]
-        public IActionResult GetBirimler(int bolumId = 0, int kurumId = 0, int araciKurumId = 0)
+        public IActionResult GetBirimler(int bolumId = 0, int araciKurumId = 0)
         {
             var list = new List<dynamic>();
             using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             using var cmd = new SqlCommand("SP_GET_BIRIMLER", conn);
             cmd.CommandType = CommandType.StoredProcedure;
-
             cmd.Parameters.AddWithValue("@BOLUM_ID", bolumId);
-            cmd.Parameters.AddWithValue("@KURUM_ID", kurumId);
             cmd.Parameters.AddWithValue("@ARACI_KURUM_ID", araciKurumId);
 
+            conn.Open();
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new { Id = Convert.ToInt32(reader["Id"]), Name = reader["Ad"].ToString() });
+            }
+
+            return Json(list);
+        }
+
+
+        [HttpGet("GetFilteredUsers")]
+        public IActionResult GetFilteredUsers(int bolumId = 0, int araciKurumId = 0)
+        {
+            var list = new List<dynamic>();
+            using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            using var cmd = new SqlCommand("SP_GET_FILTERED_USERS", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@BolumId", bolumId);
+            cmd.Parameters.AddWithValue("@AraciKurumId", araciKurumId);
             conn.Open();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
@@ -282,16 +297,18 @@ namespace OptMailWeb.Controllers
                 list.Add(new
                 {
                     Id = Convert.ToInt32(reader["Id"]),
-                    Name = reader["Ad"].ToString()
+                    AdSoyad = reader["AdSoyad"].ToString(),
+                    Mail = reader["Mail"].ToString(),
+                    Telefon = reader["Telefon"].ToString()
                 });
             }
-
-            return Ok(list);
+            return Json(list);
         }
+    }
 
 
 
-private static string[] Scopes = { GmailService.Scope.GmailSend };
+    private static string[] Scopes = { GmailService.Scope.GmailSend };
         private const string ApplicationName = "OPT Mail Sender";
 
         [HttpPost("SendMail")]

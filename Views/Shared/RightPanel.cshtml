@@ -120,66 +120,78 @@
 </div>
 
 <script>
-    $(document).ready(function () {
 
+    $(document).ready(function () {
         // Bölümleri çek
         $.getJSON("/Mail/GetBolumler", function (data) {
             $("#bolum").append('<option value="">Seçiniz</option>');
             $.each(data, function (i, item) {
-                $("#bolum").append('<option value="' + item.id + '">' + item.name + '</option>');
+                $("#bolum").append(`<option value="${item.id}">${item.name}</option>`);
             });
         });
 
-        // Kurumları çek
-        $.getJSON("/Mail/GetAraciKurumlar", function (data) {
-            $("#kurum").append('<option value="">Seçiniz</option>');
-            $.each(data, function (i, item) {
-                $("#kurum").append('<option value="' + item.id + '">' + item.name + '</option>');
-            });
-        });
+        // Bölüm değişince Aracı Kurumları doldur
+        $("#bolum").change(function () {
+            const bolumId = $(this).val() || 0;
+            $("#aracikurum").empty().append('<option value="">Seçiniz</option>');
+            $("#kurum").empty().append('<option value="">Seçiniz</option>');
 
-        // Bölüm veya Kurum değişince birimleri çek
-        $("#bolum, #kurum").change(function () {
-            const bolumId = $("#bolum").val() || 0;
-            const kurumId = $("#kurum").val() || 0;
-            $("#birim").empty();
-            $.getJSON("/Mail/GetBirimler?bolumId=" + bolumId + "&kurumId=" + kurumId, function (data) {
-                $("#birim").append('<option value="">Seçiniz</option>');
-                $.each(data, function (i, item) {
-                    $("#birim").append('<option value="' + item.id + '">' + item.name + '</option>');
+            if (bolumId != 0) {
+                $.getJSON(`/Mail/GetAraciKurumlar?bolumId=${bolumId}`, function (data) {
+                    $.each(data, function (i, item) {
+                        $("#aracikurum").append(`<option value="${item.id}">${item.name}</option>`);
+                    });
                 });
-            });
+            }
+
+            loadFilteredUsers();
         });
 
+        // Aracı Kurum değişince Kurum/Birimleri doldur
+        $("#aracikurum").change(function () {
+            const bolumId = $("#bolum").val() || 0;
+            const araciKurumId = $(this).val() || 0;
+            $("#kurum").empty().append('<option value="">Seçiniz</option>');
+
+            if (araciKurumId != 0) {
+                $.getJSON(`/Mail/GetKurumler?bolumId=${bolumId}&araciKurumId=${araciKurumId}`, function (data) {
+                    $.each(data, function (i, item) {
+                        $("#kurum").append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                });
+            }
+
+            loadFilteredUsers();
+        });
+
+        // Kurum değişince kullanıcıları filtrele
+        $("#kurum").change(function () {
+            loadFilteredUsers();
+        });
     });
 
-    // Filtrelenmiş kullanıcıları getir
+    // Kullanıcıları filtreleme
     function loadFilteredUsers() {
         const bolumId = $("#bolum").val() || 0;
+        const araciKurumId = $("#aracikurum").val() || 0;
         const kurumId = $("#kurum").val() || 0;
-        const araciKurumId = $("#birim").val() || 0;
 
-        // Filtre seçilmemişse 0 yerine null gönderebiliriz
-        $.getJSON(`/Mail/GetFilteredUsers?bolumId=${bolumId || ''}&kurumId=${kurumId || ''}&araciKurumId=${araciKurumId || ''}`, function (data) {
+        $.getJSON(`/Mail/GetFilteredUsers?bolumId=${bolumId}&araciKurumId=${araciKurumId}&kurumId=${kurumId}`, function (data) {
             const tbody = $("#filteredUsersBody");
             tbody.empty();
             data.forEach(user => {
                 tbody.append(`
-                        <tr>
-                            <td>
-                                <label class="customcheckbox">
-                                    <input type="checkbox" class="user-checkbox" data-mail="${user.mail}">
-                                    <span class="checkmark"></span>
-                                </label>
-                            </td>
-                            <td>${user.adSoyad}</td>
-                            <td>${user.mail}</td>
-                            <td>${user.telefon}</td>
-                        </tr>
-                    `);
+                    <tr>
+                        <td>${user.adSoyad}</td>
+                        <td>${user.mail}</td>
+                        <td>${user.telefon}</td>
+                    </tr>
+                `);
             });
         });
     }
+
+
 
 
     // Filtre değişince tabloyu güncelle

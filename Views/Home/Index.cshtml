@@ -152,7 +152,7 @@
                                     </div>
                                     <div class="col">
                                         <label>Birim</label>
-                                        <select id="KurumId" class="form-select"></select>
+                                        <select id="BirimId" name="KurumId" class="form-select"></select>
                                     </div>
                                 </div>
                                 <div class="mb-2">
@@ -251,22 +251,30 @@
                 loadAraciKurumlar();
 
                 // Modal açıldığında tüm birimler (boş filtreyle) gelsin
-                loadBirimler({ bolumId: 0, araciKurumId: 0 }, $("#KurumId"));
+                loadBirimler(0, 0, 0);
             });
 
             // Bölüm veya Aracı Kurum değiştiğinde birimleri filtrele
-            $("#BolumId, #AraciKurumId").change(function () {
-                const bolumId = $("#BolumId").val() || 0;
-                const araciKurumId = $("#AraciKurumId").val() || 0;
+           
 
-                loadBirimler({ bolumId: bolumId, araciKurumId: araciKurumId }, $("#KurumId"));
+            // Bölüm, Kurum veya Aracı Kurum değiştiğinde filtrele
+            $("#BolumId, #AraciKurumId").change(function () {
+                const bolumId = parseInt($("#BolumId").val()) || 0;
+                const araciKurumId = parseInt($("#AraciKurumId").val()) || 0;
+
+                // KurumId, eğer ana kurum seçimi varsa ayrı bir select ise onun değeri alınabilir.
+                const kurumId = 0; // burayı ihtiyaç varsa ayrı select ile al
+
+                loadBirimler(bolumId, kurumId, araciKurumId);
             });
+
+
 
             // Kaydet butonu AJAX
             $("#btnKaydetKullanici").click(function () {
                 const data = {
                     BolumId: $("#BolumId").val(),
-                    KurumId: $("#KurumId").val(),       // "Birim" dropdown aslında KurumId
+                    KurumId: $("#BirimId").val(), // Burada doğru dropdown ID kullanıyoruz
                     AraciKurumId: $("#AraciKurumId").val(),
                     AdSoyad: $("#AdSoyad").val(),
                     Telefon: $("#Telefon").val(),
@@ -328,22 +336,23 @@
                 });
         }
 
-        function loadBirimler(params, $target) {
-            const q = Object.assign({ bolumId: 0, kurumId: 0, araciKurumId: YOUR_ARACI_KURUM_ID }, params);
-
-            $.getJSON('/Mail/GetBirimler', q)
-                .done(function (data) {
-                    $target.empty().append('<option value="">Seçiniz</option>');
-                    data.forEach(item => {
-                        // API id/name dönüyor
-                        $target.append(`<option value="${item.id}">${item.name}</option>`);
-                    });
-                })
-                .fail(function (xhr) {
-                    console.error("Birimler yüklenemedi:", xhr.responseText);
-                    $target.empty().append('<option value="">Yüklenemedi</option>');
+        function loadBirimler(bolumId, kurumId, araciKurumId) {
+            $.get("/Mail/GetBirimler", {
+                bolumId: bolumId,
+                kurumId: kurumId || 0,
+                araciKurumId: araciKurumId || 0
+            }, function (data) {
+                const select = $("#BirimId");
+                select.empty();
+                select.append('<option value="0">Seçiniz</option>');
+                $.each(data, function (i, item) {
+                    select.append('<option value="' + item.id + '">' + item.name + '</option>');
                 });
+            });
         }
+
+
+
 
 
         function fillSelect($sel, items, textProp = 'Name', valProp = 'Id') {
@@ -390,11 +399,14 @@
             });
 
             // Bölüm veya Aracı Kurum değişirse birimleri yeniden yükle
-            $("#BolumId, #AraciKurumId").change(function () {
+            $("#BolumId, #AraciKurumId, #KurumId").change(function () {
                 const bolumId = $("#BolumId").val() || 0;
+                const kurumId = $("#KurumId").val() || 0;
                 const araciKurumId = $("#AraciKurumId").val() || 0;
-                loadBirimler({ bolumId: bolumId, araciKurumId: araciKurumId }, $("#KurumId"));
+
+                loadBirimler({ bolumId, kurumId, araciKurumId }, $("#BirimId"));
             });
+
         });
 
 
