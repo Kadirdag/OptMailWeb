@@ -264,25 +264,34 @@ namespace OptMailWeb.Controllers
         }
 
         [HttpGet("GetBirimler")]
-        public IActionResult GetBirimler(int araciKurumId)
+        public IActionResult GetBirimler(int bolumId = 0, int kurumId = 0, int araciKurumId = 0)
         {
             var list = new List<dynamic>();
             using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             using var cmd = new SqlCommand("SP_GET_BIRIMLER", conn);
             cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@BOLUM_ID", bolumId);
+            cmd.Parameters.AddWithValue("@KURUM_ID", kurumId);
             cmd.Parameters.AddWithValue("@ARACI_KURUM_ID", araciKurumId);
+
             conn.Open();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                list.Add(new { Id = reader["ID"], Name = reader["Ad"] });
+                list.Add(new
+                {
+                    Id = Convert.ToInt32(reader["Id"]),
+                    Name = reader["Ad"].ToString()
+                });
             }
-            return Json(list);
+
+            return Ok(list);
         }
 
 
 
-        private static string[] Scopes = { GmailService.Scope.GmailSend };
+private static string[] Scopes = { GmailService.Scope.GmailSend };
         private const string ApplicationName = "OPT Mail Sender";
 
         [HttpPost("SendMail")]

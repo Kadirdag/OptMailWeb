@@ -249,14 +249,24 @@
                 // Comboları doldur
                 loadBolumler();
                 loadAraciKurumlar();
-                loadBirimler(); // tüm birimleri getir, boş "Seçiniz" opsiyonu göster
+
+                // Modal açıldığında tüm birimler (boş filtreyle) gelsin
+                loadBirimler({ bolumId: 0, araciKurumId: 0 }, $("#KurumId"));
+            });
+
+            // Bölüm veya Aracı Kurum değiştiğinde birimleri filtrele
+            $("#BolumId, #AraciKurumId").change(function () {
+                const bolumId = $("#BolumId").val() || 0;
+                const araciKurumId = $("#AraciKurumId").val() || 0;
+
+                loadBirimler({ bolumId: bolumId, araciKurumId: araciKurumId }, $("#KurumId"));
             });
 
             // Kaydet butonu AJAX
             $("#btnKaydetKullanici").click(function () {
                 const data = {
                     BolumId: $("#BolumId").val(),
-                    KurumId: $("#KurumId").val(),   
+                    KurumId: $("#KurumId").val(),       // "Birim" dropdown aslında KurumId
                     AraciKurumId: $("#AraciKurumId").val(),
                     AdSoyad: $("#AdSoyad").val(),
                     Telefon: $("#Telefon").val(),
@@ -266,9 +276,8 @@
                     Aktif: $("#Aktif").is(":checked")
                 };
 
-                // Tam yol kullanıyoruz: Controller = MailKullanici, Action = Kaydet
                 $.ajax({
-                    url: '/Mail/Kaydet',  // MailController kullanıldığı için /Mail/Kaydet
+                    url: '/Mail/Kaydet',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(data),
@@ -276,18 +285,14 @@
                         alert(res.message);
                         if (res.success) {
                             $("#mailKullaniciModal").modal("hide");
-                            location.reload();
-                            loadKullaniciList();
-                            
+                            location.reload(); // ekranı yeniler
                         }
                     }
                 });
-
             });
 
-
-
         });
+
 
 
         function loadBolumler() {
@@ -323,20 +328,33 @@
                 });
         }
 
-        function loadBirimler() {
-            return $.getJSON('/Mail/GetBirimler', {
-                bolumId: 0,
-                araciKurumId: 0
-            })
+        function loadBirimler(params, $target) {
+            const q = Object.assign({ bolumId: 0, kurumId: 0, araciKurumId: YOUR_ARACI_KURUM_ID }, params);
+
+            $.getJSON('/Mail/GetBirimler', q)
                 .done(function (data) {
-                    const $sel = $("#KurumId"); // Select ID doğru olmalı
-                    $sel.empty().append('<option value="">Seçiniz</option>');
+                    $target.empty().append('<option value="">Seçiniz</option>');
                     data.forEach(item => {
-                        $sel.append(`<option value="${item.Id}">${item.Name}</option>`); // Name kullan
+                        // API id/name dönüyor
+                        $target.append(`<option value="${item.id}">${item.name}</option>`);
                     });
+                })
+                .fail(function (xhr) {
+                    console.error("Birimler yüklenemedi:", xhr.responseText);
+                    $target.empty().append('<option value="">Yüklenemedi</option>');
                 });
         }
 
+
+        function fillSelect($sel, items, textProp = 'Name', valProp = 'Id') {
+            $sel.empty().append('<option value="">Seçiniz</option>');
+            if (!items || !items.length) return;
+            items.forEach(it => {
+                const txt = it[textProp] ?? it.Ad ?? it.name ?? it.Name ?? '';
+                const val = it[valProp] ?? it.Id ?? it.id ?? '';
+                $sel.append(`<option value="${val}">${txt}</option>`);
+            });
+        }
 
 
 
@@ -372,7 +390,11 @@
             });
 
             // Bölüm veya Aracı Kurum değişirse birimleri yeniden yükle
-            $("#BolumId, #AraciKurumId").change(loadBirimler);
+            $("#BolumId, #AraciKurumId").change(function () {
+                const bolumId = $("#BolumId").val() || 0;
+                const araciKurumId = $("#AraciKurumId").val() || 0;
+                loadBirimler({ bolumId: bolumId, araciKurumId: araciKurumId }, $("#KurumId"));
+            });
         });
 
 
