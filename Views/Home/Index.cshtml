@@ -67,6 +67,79 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             overflow-y: auto;
         }
+
+        .form-select, .form-control, textarea {
+            border-radius: 0.5rem;
+            border: 1px solid #cde0ff;
+            background-color: #ffffff;
+            transition: all 0.2s;
+        }
+
+            .form-select:hover, .form-control:hover, textarea:hover {
+                border-color: #1a73e8;
+                box-shadow: 0 0 8px rgba(26, 115, 232, 0.15);
+            }
+
+        .modal-content {
+            border-radius: 0.75rem;
+            background-color: #f8faff;
+        }
+
+        .modal-header .modal-title {
+            color: #1a73e8;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #1a73e8;
+            border-color: #1a73e8;
+            transition: 0.2s;
+        }
+
+            .btn-primary:hover {
+                background-color: #155ab6;
+                border-color: #155ab6;
+            }
+
+        .toolbar button, .toolbar select, .toolbar input[type="color"] {
+            margin: 0 0.2rem 0.2rem 0;
+            padding: 0.35rem 0.6rem;
+            border-radius: 0.4rem;
+            border: 1px solid #cde0ff;
+            background-color: #f0f5ff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .toolbar button:hover, .toolbar select:hover, .toolbar input[type="color"]:hover {
+                border-color: #1a73e8;
+                background-color: #e6f0ff;
+            }
+
+        #editor {
+            min-height: 200px;
+            border: 1px solid #cde0ff;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            background-color: #ffffff;
+            overflow-y: auto;
+        }
+
+        .editor-container {
+            display: flex;
+            gap: 1rem; /* Sol ve sağ panel arasına boşluk */
+        }
+
+        .left-panel {
+            flex: 0 0 800px; /* Sol panel sabit 400px genişlik */
+            min-width: 800px; /* Küçülmesini önler */
+        }
+
+        .right-panel {
+            flex: 1; /* Sağ panel kalan alanı kaplar */
+            min-width: 200px; /* İsteğe bağlı minimum genişlik */
+            overflow-x: auto; /* İçerik taşarsa yatay kaydırma */
+        }
     </style>
 </head>
 <body>
@@ -144,15 +217,15 @@
                                 <div class="row mb-2">
                                     <div class="col">
                                         <label>Bölüm</label>
-                                        <select id="BolumId" class="form-select"></select>
+                                        <select id="BolumId" name="BolumId" class="form-select"></select>
                                     </div>
                                     <div class="col">
                                         <label>Aracı Kurum</label>
-                                        <select id="AraciKurumId" class="form-select"></select>
+                                        <select id="AraciKurumId" name="AraciKurumId" class="form-select"></select>
                                     </div>
                                     <div class="col">
                                         <label>Birim</label>
-                                        <select id="BirimId" name="KurumId" class="form-select"></select>
+                                        <select id="BirimId" name="BirimId" class="form-select"></select>
                                     </div>
                                 </div>
                                 <div class="mb-2">

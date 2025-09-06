@@ -5,25 +5,42 @@
     .customcheckbox {
         position: relative;
         display: inline-block;
-        width: 24px;
-        height: 24px;
-        margin-right: 6px;
+        cursor: pointer;
+        user-select: none;
+        padding-left: 28px; /* checkbox kutusu için boşluk bırak */
     }
 
-        .customcheckbox input {
-            opacity: 0;
-            width: 0;
-            height: 0;
+        .customcheckbox input[type=checkbox] {
+            all: unset; /* bootstrap stilini sıfırla */
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            opacity: 0; /* görünmez ama tıklanabilir */
+            z-index: 2;
         }
 
         .customcheckbox .checkmark {
             position: absolute;
-            top: 0;
             left: 0;
-            height: 24px;
-            width: 24px;
-            background-color: #007bff;
+            top: 0;
+            height: 20px;
+            width: 20px;
+            background-color: #eee;
+            border: 1px solid #aaa;
             border-radius: 4px;
+        }
+
+        .customcheckbox input:checked ~ .checkmark {
+            background-color: #0d6efd; /* bootstrap mavi */
+        }
+
+        .customcheckbox .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
         }
 
         .customcheckbox input:checked ~ .checkmark:after {
@@ -31,18 +48,68 @@
         }
 
         .customcheckbox .checkmark:after {
-            content: "";
-            position: absolute;
-            left: 8px;
-            top: 4px;
-            width: 6px;
-            height: 12px;
+            left: 6px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
             border: solid white;
             border-width: 0 2px 2px 0;
             transform: rotate(45deg);
-            display: none;
         }
-</style>
+
+    .card.shadow-sm {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 0.75rem;
+        background-color: #f8faff; /* çok açık mavi arka plan */
+        padding: 1.5rem;
+    }
+
+    .card-title {
+        font-weight: 600;
+        color: #1a73e8; /* soft mavi ton */
+        margin-bottom: 1rem;
+    }
+
+
+    .form-select {
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #cde0ff;
+        background-color: #ffffff;
+        color: #1a1a1a;
+        transition: all 0.2s;
+    }
+
+        .form-select:hover {
+            border-color: #1a73e8;
+            box-shadow: 0 0 8px rgba(26, 115, 232, 0.2);
+        }
+
+    #filteredUsersBody tr {
+        transition: background 0.2s;
+    }
+
+        #filteredUsersBody tr:hover {
+            background-color: #e8f0fe; /* soft mavi hover */
+        }
+
+    #filteredUsersBody td {
+        padding: 0.75rem 1rem;
+    }
+
+    .customcheckbox .checkmark {
+        background-color: #e0e7ff; /* açık mavi */
+    }
+
+    .customcheckbox input:checked ~ .checkmark {
+        background-color: #1a73e8; /* dolu mavi */
+    }
+
+    .customcheckbox .checkmark:after {
+        border-color: #fff;
+    }
+
+ </style>
 <div class="col-md">
     <div class="card shadow-sm p-3">
         <h5 class="card-title">Alıcı Filtreleme</h5>
@@ -53,15 +120,14 @@
         </div>
 
         <div class="mb-2">
-            <label for="kurum" class="form-label">Kurum</label>
-            <select id="kurum" class="form-select"></select>
+            <label for="aracikurum" class="form-label">Aracı Kurum</label>
+            <select id="aracikurum" class="form-select"></select>
         </div>
 
         <div class="mb-2">
             <label for="birim" class="form-label">Birim</label>
             <select id="birim" class="form-select"></select>
         </div>
-
 
 
 
@@ -121,75 +187,112 @@
 
 <script>
 
-    $(document).ready(function () {
-        // Bölümleri çek
-        $.getJSON("/Mail/GetBolumler", function (data) {
-            $("#bolum").append('<option value="">Seçiniz</option>');
-            $.each(data, function (i, item) {
-                $("#bolum").append(`<option value="${item.id}">${item.name}</option>`);
-            });
-        });
-
-        // Bölüm değişince Aracı Kurumları doldur
-        $("#bolum").change(function () {
-            const bolumId = $(this).val() || 0;
-            $("#aracikurum").empty().append('<option value="">Seçiniz</option>');
-            $("#kurum").empty().append('<option value="">Seçiniz</option>');
-
-            if (bolumId != 0) {
-                $.getJSON(`/Mail/GetAraciKurumlar?bolumId=${bolumId}`, function (data) {
-                    $.each(data, function (i, item) {
-                        $("#aracikurum").append(`<option value="${item.id}">${item.name}</option>`);
-                    });
-                });
-            }
-
-            loadFilteredUsers();
-        });
-
-        // Aracı Kurum değişince Kurum/Birimleri doldur
-        $("#aracikurum").change(function () {
-            const bolumId = $("#bolum").val() || 0;
-            const araciKurumId = $(this).val() || 0;
-            $("#kurum").empty().append('<option value="">Seçiniz</option>');
-
-            if (araciKurumId != 0) {
-                $.getJSON(`/Mail/GetKurumler?bolumId=${bolumId}&araciKurumId=${araciKurumId}`, function (data) {
-                    $.each(data, function (i, item) {
-                        $("#kurum").append(`<option value="${item.id}">${item.name}</option>`);
-                    });
-                });
-            }
-
-            loadFilteredUsers();
-        });
-
-        // Kurum değişince kullanıcıları filtrele
-        $("#kurum").change(function () {
-            loadFilteredUsers();
-        });
-    });
-
-    // Kullanıcıları filtreleme
+    // Kullanıcıları filtreleme fonksiyonu
     function loadFilteredUsers() {
         const bolumId = $("#bolum").val() || 0;
         const araciKurumId = $("#aracikurum").val() || 0;
         const kurumId = $("#kurum").val() || 0;
+        const birimId = $("#birim").val() || 0;
 
         $.getJSON(`/Mail/GetFilteredUsers?bolumId=${bolumId}&araciKurumId=${araciKurumId}&kurumId=${kurumId}`, function (data) {
             const tbody = $("#filteredUsersBody");
             tbody.empty();
-            data.forEach(user => {
-                tbody.append(`
-                    <tr>
-                        <td>${user.adSoyad}</td>
-                        <td>${user.mail}</td>
-                        <td>${user.telefon}</td>
-                    </tr>
-                `);
-            });
+
+            if (Array.isArray(data)) {
+                data.forEach(user => {
+                    tbody.append(`
+                        <tr>
+                            <td>
+                                <label class="customcheckbox">
+                                    <input type="checkbox" class="user-checkbox" data-mail="${user.email}">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td>${user.name}</td>
+                            <td class="mail-cell">${user.email}</td>
+                            <td>${user.telefon}</td>
+                        </tr>
+                    `);
+                });
+            }
+
+            // yeni data geldiğinde "tümünü seç" sıfırla
+            $("#selectAllUsers").prop("checked", false);
         });
     }
+
+    // Bölümleri yükle
+    $.getJSON("/Mail/GetBolumler", function (data) {
+        const bolumSelect = $("#bolum");
+        bolumSelect.empty().append('<option value="">Seçiniz</option>');
+        if (Array.isArray(data)) {
+            data.forEach(item => {
+                bolumSelect.append(`<option value="${item.id}">${item.name}</option>`);
+            });
+        }
+    });
+
+    // Bölüm değişince Aracı Kurum ve Kurum/Birim dropdownlarını temizle ve doldur
+    $("#bolum").change(function () {
+        const bolumId = $(this).val() || 0;
+        $("#aracikurum, #kurum, #birim").empty().append('<option value="">Seçiniz</option>');
+        loadFilteredUsers();
+
+        if (bolumId != 0) {
+            $.getJSON(`/Mail/GetAraciKurumlar?bolumId=${bolumId}`, function (data) {
+                const araciSelect = $("#aracikurum");
+                araciSelect.empty().append('<option value="">Seçiniz</option>');
+                if (Array.isArray(data)) {
+                    data.forEach(item => {
+                        araciSelect.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                }
+            });
+        }
+    });
+
+    // Aracı Kurum değişince Kurum ve Birimleri doldur
+    $("#aracikurum").change(function () {
+        const bolumId = $("#bolum").val() || 0;
+        const araciKurumId = $(this).val() || 0;
+
+        $("#kurum, #birim").empty().append('<option value="">Seçiniz</option>');
+
+        if (araciKurumId != 0) {
+            // Kurumları getir
+            $.getJSON(`/Mail/GetKurumlar?bolumId=${bolumId}&araciKurumId=${araciKurumId}`, function (data) {
+                const kurumSelect = $("#kurum");
+                kurumSelect.empty().append('<option value="">Seçiniz</option>');
+                if (Array.isArray(data)) {
+                    data.forEach(item => {
+                        kurumSelect.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                }
+            });
+
+            // Birimleri getir
+            $.getJSON(`/Mail/GetBirimler?bolumId=${bolumId}&araciKurumId=${araciKurumId}`, function (data) {
+                const birimSelect = $("#birim");
+                birimSelect.empty().append('<option value="">Seçiniz</option>');
+                if (Array.isArray(data)) {
+                    data.forEach(item => {
+                        birimSelect.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                }
+            });
+        }
+
+        loadFilteredUsers();
+    });
+
+    // Kurum veya Birim değişince kullanıcıları filtrele
+    $("#kurum, #birim").change(function () {
+        loadFilteredUsers();
+    });
+
+
+
+
 
 
 
@@ -290,9 +393,25 @@
 
 
 
-    $("#selectAllUsers").on("change", function () {
-        const checked = $(this).is(":checked");
-        $(".user-checkbox").prop("checked", checked);
+    $(document).on("change", "#selectAllUsers", function () {
+        const isChecked = $(this).is(":checked");
+        $("#filteredUsersBody .user-checkbox").prop("checked", isChecked);
+    });
+
+    // Alt kutular değişince üst kutuyu güncelle
+    $(document).on("change", "#filteredUsersBody .user-checkbox", function () {
+        const total = $("#filteredUsersBody .user-checkbox").length;
+        const checked = $("#filteredUsersBody .user-checkbox:checked").length;
+        $("#selectAllUsers").prop("checked", total > 0 && total === checked);
+    });
+
+    // Mail ile arama
+    $(document).on("input", "#searchMail", function () {
+        const search = $(this).val().toLowerCase();
+        $("#filteredUsersBody tr").each(function () {
+            const mail = $(this).find(".mail-cell").text().toLowerCase();
+            $(this).toggle(mail.includes(search));
+        });
     });
 
     // Mail ile arama
