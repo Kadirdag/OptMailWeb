@@ -187,24 +187,25 @@
 
 <script>
 
-    // Kullanıcıları filtreleme fonksiyonu
+    // Kullanıcıları filtreleme
     function loadFilteredUsers() {
         const bolumId = $("#bolum").val() || 0;
         const araciKurumId = $("#aracikurum").val() || 0;
         const kurumId = $("#kurum").val() || 0;
         const birimId = $("#birim").val() || 0;
 
-        $.getJSON(`/Mail/GetFilteredUsers?bolumId=${bolumId}&araciKurumId=${araciKurumId}&kurumId=${kurumId}`, function (data) {
+        $.getJSON(`/Mail/GetFilteredUsers?bolumId=${bolumId}&araciKurumId=${araciKurumId}&kurumId=${birimId}`, function (data) {
             const tbody = $("#filteredUsersBody");
             tbody.empty();
 
             if (Array.isArray(data)) {
                 data.forEach(user => {
+                    const isChecked = selectedEmails.has(user.email) ? "checked" : "";
                     tbody.append(`
                         <tr>
                             <td>
                                 <label class="customcheckbox">
-                                    <input type="checkbox" class="user-checkbox" data-mail="${user.email}">
+                                    <input type="checkbox" class="user-checkbox" data-mail="${user.email}" ${isChecked}>
                                     <span class="checkmark"></span>
                                 </label>
                             </td>
@@ -216,8 +217,10 @@
                 });
             }
 
-            // yeni data geldiğinde "tümünü seç" sıfırla
-            $("#selectAllUsers").prop("checked", false);
+            // "Tümünü seç" kontrolünü güncelle
+            const total = $("#filteredUsersBody .user-checkbox").length;
+            const checked = $("#filteredUsersBody .user-checkbox:checked").length;
+            $("#selectAllUsers").prop("checked", total > 0 && total === checked);
         });
     }
 
@@ -232,7 +235,7 @@
         }
     });
 
-    // Bölüm değişince Aracı Kurum ve Kurum/Birim dropdownlarını temizle ve doldur
+    // Bölüm değişince Aracı Kurumları doldur
     $("#bolum").change(function () {
         const bolumId = $(this).val() || 0;
         $("#aracikurum, #kurum, #birim").empty().append('<option value="">Seçiniz</option>');
@@ -251,26 +254,14 @@
         }
     });
 
-    // Aracı Kurum değişince Kurum ve Birimleri doldur
+    // Aracı Kurum değişince Kurum & Birimleri doldur
     $("#aracikurum").change(function () {
         const bolumId = $("#bolum").val() || 0;
         const araciKurumId = $(this).val() || 0;
 
         $("#kurum, #birim").empty().append('<option value="">Seçiniz</option>');
 
-        if (araciKurumId != 0) {
-            // Kurumları getir
-            $.getJSON(`/Mail/GetKurumlar?bolumId=${bolumId}&araciKurumId=${araciKurumId}`, function (data) {
-                const kurumSelect = $("#kurum");
-                kurumSelect.empty().append('<option value="">Seçiniz</option>');
-                if (Array.isArray(data)) {
-                    data.forEach(item => {
-                        kurumSelect.append(`<option value="${item.id}">${item.name}</option>`);
-                    });
-                }
-            });
 
-            // Birimleri getir
             $.getJSON(`/Mail/GetBirimler?bolumId=${bolumId}&araciKurumId=${araciKurumId}`, function (data) {
                 const birimSelect = $("#birim");
                 birimSelect.empty().append('<option value="">Seçiniz</option>');
@@ -280,81 +271,47 @@
                     });
                 }
             });
-        }
 
         loadFilteredUsers();
     });
 
     // Kurum veya Birim değişince kullanıcıları filtrele
-    $("#kurum, #birim").change(function () {
-        loadFilteredUsers();
+    $("#kurum, #birim").change(loadFilteredUsers);
+
+    // ------------------ Checkbox Eventleri ------------------
+    // Tümünü Seç
+    $(document).on("change", "#selectAllUsers", function () {
+        $("#filteredUsersBody .user-checkbox").prop("checked", $(this).is(":checked"));
     });
 
+    // Alt kutular değişince üst kutuyu güncelle
+    $(document).on("change", "#filteredUsersBody .user-checkbox", function () {
+        const total = $("#filteredUsersBody .user-checkbox").length;
+        const checked = $("#filteredUsersBody .user-checkbox:checked").length;
+        $("#selectAllUsers").prop("checked", total > 0 && total === checked);
+    });
 
-
-
-
-
-
-
-    // Filtre değişince tabloyu güncelle
-    document.getElementById("bolum").addEventListener("change", loadFilteredUsers);
-    document.getElementById("kurum").addEventListener("change", loadFilteredUsers);
-    document.getElementById("birim").addEventListener("change", loadFilteredUsers);
-
-    // Sayfa yüklendiğinde tabloyu getir
-    document.addEventListener("DOMContentLoaded", loadFilteredUsers);
-
-    // Seçilen kullanıcıların maillerini gönder
-    function sendSelectedUsersMail() {
-        const selectedMails = [];
-
-        document.querySelectorAll(".user-checkbox:checked").forEach(cb => {
-            if (cb.dataset.mail) selectedMails.push(cb.dataset.mail);
+    // ------------------ Mail Arama ------------------
+    $("#searchMail").on("input", function () {
+        const search = $(this).val().toLowerCase();
+        $("#filteredUsersBody tr").each(function () {
+            const mail = $(this).find(".mail-cell").text().toLowerCase();
+            $(this).toggle(mail.includes(search));
         });
-
-        if (selectedMails.length === 0) {
-            alert("Lütfen en az bir kullanıcı seçiniz!");
-            return;
-        }
-
-        fetch("/Mail/SendSelectedUsersMail", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(selectedMails)
-        })
-            .then(res => res.json())
-            .then(res => alert(res.message))
-            .catch(err => {
-                console.error(err);
-                alert("Mail gönderme sırasında hata oluştu!");
-            });
-    }
-
-    // Kaydet butonuna event bağlama
-    document.addEventListener("DOMContentLoaded", function () {
-        const btn = document.getElementById("btnSave");
-        if (btn) {
-            btn.addEventListener("click", sendSelectedUsersMail);
-        }
     });
 
-
-
-
+    // ------------------ Mail Gönderme ------------------
     function sendSelectedUsersMail() {
-        const selectedEmails = Array.from(document.querySelectorAll(".user-checkbox:checked"))
-            .map(cb => cb.dataset.mail)
-            .filter(mail => mail);
+        const selectedEmails = $(".user-checkbox:checked").map(function () {
+            return $(this).data("mail");
+        }).get();
 
         if (selectedEmails.length === 0) {
             alert("Lütfen en az bir kullanıcı seçiniz!");
             return;
         }
 
-        // index.cshtml’den mail başlığı ve içeriğini al
         const mailData = window.parent.getMailData();
-
         if (!mailData.subject || !mailData.body) {
             alert("Mail başlığı veya içeriği boş olamaz!");
             return;
@@ -385,46 +342,29 @@
             });
     }
 
-    // Kaydet butonuna bağla
-    document.addEventListener("DOMContentLoaded", function () {
-        const btn = document.getElementById("btnSave");
-        if (btn) btn.addEventListener("click", sendSelectedUsersMail);
-    });
 
+    let selectedEmails = new Set();
 
-
-    $(document).on("change", "#selectAllUsers", function () {
-        const isChecked = $(this).is(":checked");
-        $("#filteredUsersBody .user-checkbox").prop("checked", isChecked);
-    });
-
-    // Alt kutular değişince üst kutuyu güncelle
+    // Alt kutu değişince güncelle
     $(document).on("change", "#filteredUsersBody .user-checkbox", function () {
+        const email = $(this).data("mail");
+        if ($(this).is(":checked")) {
+            selectedEmails.add(email);
+        } else {
+            selectedEmails.delete(email);
+        }
+
         const total = $("#filteredUsersBody .user-checkbox").length;
         const checked = $("#filteredUsersBody .user-checkbox:checked").length;
         $("#selectAllUsers").prop("checked", total > 0 && total === checked);
     });
 
-    // Mail ile arama
-    $(document).on("input", "#searchMail", function () {
-        const search = $(this).val().toLowerCase();
-        $("#filteredUsersBody tr").each(function () {
-            const mail = $(this).find(".mail-cell").text().toLowerCase();
-            $(this).toggle(mail.includes(search));
-        });
-    });
 
-    // Mail ile arama
-    $("#searchMail").on("keyup", function () {
-        const search = $(this).val().toLowerCase();
-        $("#filteredUsersBody tr").filter(function () {
-            $(this).toggle($(this).find("td:eq(2)").text().toLowerCase().includes(search));
-        });
-    });
+    // Kaydet butonuna bağla
+    $("#btnSave").on("click", sendSelectedUsersMail);
 
-    // Filtre değiştiğinde tabloyu güncelle
-    $("#bolum, #kurum, #birim").on("change", loadFilteredUsers);
+    // ------------------ İlk Yükleme ------------------
+    $(document).ready(loadFilteredUsers);
 
-    $(document).ready(loadFilteredUsers); // Sayfa yüklendiğinde tüm liste
 
 </script>

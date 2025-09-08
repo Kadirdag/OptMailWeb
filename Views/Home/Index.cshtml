@@ -393,8 +393,8 @@
         }
 
         // Aracı Kurum (endpoint DÜZELTİLDİ!)
-        function loadAraciKurumlar() {
-            return $.getJSON('/Mail/GetAraciKurumlar')
+        function loadAraciKurumlar(bolumId = 0) {
+            return $.getJSON(`/Mail/GetAraciKurumlar?bolumId=${bolumId}`)
                 .done(function (data) {
                     const $sel = $("#AraciKurumId");
                     $sel.empty().append('<option value="">Seçiniz</option>');
@@ -458,7 +458,10 @@
             });
 
             // Bölüm veya Aracı Kurum değiştiğinde birimleri yükle
-            $("#BolumId, #AraciKurumId").on('change', loadBirimler);
+            $("#BolumId").change(function () {
+                const bolumId = $(this).val() || 0;
+                loadAraciKurumlar(bolumId);
+            });
         });
 
         $(document).ready(function () {
