@@ -32,6 +32,44 @@ namespace OptMailWeb.Controllers
 
 
 
+        [HttpPost("DeleteUser")]
+        public IActionResult DeleteUser([FromBody] DeleteUserRequest request)
+        {
+            if (request == null || request.UserId <= 0)
+                return Json(new { success = false, message = "Geçersiz kullanıcı." });
+
+            try
+            {
+                using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
+                {
+                    conn.Open();
+                    using (var cmd = new SqlCommand("DELETE FROM Mail_Kullanici WHERE SYS_NO = @UserId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", request.UserId);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                            return Json(new { success = true });
+                        else
+                            return Json(new { success = false, message = "Kullanıcı bulunamadı." });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public class DeleteUserRequest
+        {
+            public int UserId { get; set; }
+        }
+
+
+
+
+
+
 
         [HttpPost("SendSelectedUsersMail")]
         public IActionResult SendSelectedUsersMail([FromBody] List<string> mails)
