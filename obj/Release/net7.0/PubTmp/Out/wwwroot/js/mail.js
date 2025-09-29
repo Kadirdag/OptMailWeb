@@ -1,21 +1,37 @@
-﻿function saveMail() {
-    const subject = document.querySelector('input[placeholder="Mail konusunu giriniz"]').value;
-    const body = document.getElementById('editor').innerHTML;
-    const toSelect = document.getElementById('mail-to');
-    const to = toSelect ? Array.from(toSelect.selectedOptions).map(opt => opt.value) : [];
+﻿// Kaydet butonuna basılınca tetiklenecek fonksiyon
+function saveSelectedUsers() {
+    const selectedUsers = [];
 
-    if (!subject || !body || to.length === 0) {
-        alert("Lütfen konu, içerik ve alıcıları seçin!");
+    $(".user-checkbox:checked").each(function () {
+        selectedUsers.push({
+            adSoyad: $(this).data("adsoyad"),
+            mail: $(this).data("mail"),
+            telefon: $(this).data("telefon")
+        });
+    });
+
+    if (selectedUsers.length === 0) {
+        alert("Lütfen en az bir kullanıcı seçiniz!");
         return;
     }
 
-    fetch('/Mail/SendMail', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, body, to })
-    })
-        .then(r => r.json())
-        .then(d => alert(d.message))
-        .catch(err => alert("Hata: " + err));
+    console.log("Seçilen kullanıcılar:", selectedUsers);
+
+    // AJAX ile server'a göndermek için örnek
+    $.ajax({
+        url: "/Mail/SaveSelectedUsers",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(selectedUsers),
+        success: function (res) {
+            alert("Seçilen kullanıcılar başarıyla kaydedildi.");
+        },
+        error: function (err) {
+            alert("Kaydetme sırasında hata oluştu!");
+            console.error(err);
+        }
+    });
 }
 
+// Kaydet butonuna event bağlama
+$(document).on("click", "#btnSave", saveSelectedUsers);
